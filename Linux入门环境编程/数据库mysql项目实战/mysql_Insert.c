@@ -11,26 +11,26 @@
 
 int main()
 {
-    // ≥ı ºªØ
+    // ÂàùÂßãÂåñ
     MYSQL *mysql = mysql_init(NULL);
     if (!mysql)
     {
         INFO("mysql_init failed");
     }
 
-    // ¡¨Ω”
+    // ËøûÊé•
     if (!mysql_real_connect(mysql, host, user, passwd, dbName, port, NULL, 0))
     {
         INFO("CONNECT FAILED: %s\n", mysql_error(mysql));
     }
 
-    // ≤Â»Î
+    // ÊèíÂÖ•
     const char *cmd_insert = "INSERT INTO TBL_USER(U_NAME, U_GENDER) VALUES('Tom', 'Female')";
     if (mysql_real_query(mysql, cmd_insert, strlen(cmd_insert)))
     {
         INFO("TBL_USER INSERT FAILED: %s\n", mysql_error(mysql));
     }
 
-    // πÿ±’
+    // ÂÖ≥Èó≠
     mysql_close(mysql);
 }
