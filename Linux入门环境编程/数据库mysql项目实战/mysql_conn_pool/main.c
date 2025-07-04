@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "string.h"
 
-#define FILE_IMAGE_LENGTH (256 * 1024)
+#define FILE_IMAGE_LENGTH (64 * 1024)
 
 int main()
 {
@@ -10,7 +10,7 @@ int main()
     mysql_pool_init(&pool);
 
     char buffer[FILE_IMAGE_LENGTH] = {0};
-    int len = read_image("Ironman.jpg", buffer);
+    int len = read_image("0Voice.jpg", buffer);
 
     MYSQL *conn = mysql_pool_get(&pool);
     if (conn)
