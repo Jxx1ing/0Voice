@@ -184,7 +184,7 @@ int init_server(unsigned short port)
         INFO("bind failed.\n");
         return -2;
     }
-    if (listen(listen_fd, 10) < 0)
+    if (listen(listen_fd, 5) < 0)
     {
         INFO("listen failed.\n");
         return -3;
