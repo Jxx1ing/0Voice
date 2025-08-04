@@ -19,3 +19,8 @@ gcc reactor.c webserver_01file.c -o webserver_file
 如何运行：
 服务端 ./webserver
 浏览器：192.168.65.131:2000
+
+
+
+参考资料以及gitlab代码：
+2404_vip/2.1.1-network-io
