@@ -1,0 +1,21 @@
+写代码的顺序：(重点关注 webserver_02status.c的状态机写法，00_str和01_file未使用到状态机)
+webserver_02status.c
+webserver_03png.c
+
+webserver__not status文件夹中(注意也要修改reactor.c中send_cb的逻辑):
+webserver__00str.c
+webserver__01file.c
+
+
+
+编译：
+gcc reactor.c webserver_02status.c -o webserver
+gcc reactor.c webserver_03png.c -o webserver_png
+gcc reactor.c webserver_00str.c -o webserver_str
+gcc reactor.c webserver_01file.c -o webserver_file
+
+
+
+如何运行：
+服务端 ./webserver
+浏览器：192.168.65.131:2000
