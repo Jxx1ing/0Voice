@@ -22,5 +22,19 @@ gcc reactor.c webserver_01file.c -o webserver_file
 
 
 
+wrk压测
+安装wrk:
+sudo apt update
+sudo apt install build-essential libssl-dev git -y
+git clone https://github.com/wg/wrk.git
+cd wrk
+make
+sudo cp wrk /usr/local/bin/
+压测：
+先运行./webserver
+wrk -c50 -t10 -d10s http://192.168.65.131:2000/
+注意：压测测试和参考比相差很多（参考可以达到10Wqps, 可能和内存介质有关。代码几乎一样）
+
+
 参考资料以及gitlab代码：
 2404_vip/2.1.1-network-io
