@@ -357,7 +357,7 @@ int ws_request(struct conn *c)
 	// 2-如果 status == 1，说明握手完成，现在处理 WebSocket 数据帧
 	else if (c->status == 1)
 	{
-		char mask[4] = {0};
+		char mask[4] = {0}; // 被传给 decode_packet() 用来接收解析到的掩码键，作为传出参数（memcpy(mask, data, 4); ）
 		int ret = 0;
 
 		char *data = decode_packet(c->rbuffer, mask, c->rlength, &ret);
@@ -390,7 +390,7 @@ if (c->status == 2) {
 	c->wlength = encode_packet(c->wbuffer, c->mask, c->payload, c->wlength);
 	c->status = 1;
 }
-它是主动发送数据的路径，比如服务端收到了一个业务指令，需要推送数据给客户端。
+它是服务端主动发送数据的路径，比如服务端收到了一个业务指令，需要推送数据给客户端。
 当 status == 2 时，说明 c->payload 已经准备好了（可能是应用逻辑生成的消息），这时就调用 encode_packet 封装为 WebSocket 帧。
 编码完成后 status 设回 1，表示等待下一次消息处理。
 */
@@ -405,25 +405,57 @@ int ws_response(struct conn *c)
 
 执行流程
 1.你先在 Linux 上启动服务端程序
-这个程序监听 8888 端口，等待客户端连接。
+这个程序监听 2000 端口，等待客户端连接。
 一旦收到 HTTP 请求，它会检查是不是 WebSocket 升级请求（通过 handshark() 完成握手）。
 
-2.你在浏览器打开 websocket.html
-你输入服务器地址（例：192.168.232.132:8888），点击 Connect。
-doConnect() 会执行 new WebSocket("ws://192.168.232.132:8888") → 浏览器向服务器发送 WebSocket 握手请求（HTTP 升级）。
+2.客户端（HTML/JS）发起连接
+你在浏览器打开 websocket.html, 输入服务器地址（例：192.168.232.133:2000），点击 Connect。
+doConnect() 会执行 new WebSocket("ws://192.168.232.133:2000") → 浏览器用HTTP 协议发送一个特殊的升级请求（HTTP Upgrade: websocket），带上：
+* Sec-WebSocket-Key（客户端生成的16 字节随机 Base64 值
+* Sec-WebSocket-Version
+* 其他 HTTP 头部信息
 
-3.握手阶段
-服务端收到握手 HTTP 请求 → ws_request() 检测到 c->status == 0 → 调用 handshake()。
-handshake() 从 HTTP 请求中取出 Sec-WebSocket-Key，加上固定 GUID，做 SHA1 + Base64 生成 Sec-WebSocket-Accept，然后返回 101 Switching Protocols 响应。
-浏览器收到 101 响应，连接状态变成 open，ws.onopen 回调执行。
+3.服务端握手（handshake）
+服务端收到这个 HTTP Upgrade 请求后 → ws_request() 检测到 c->status == 0 → 调用 handshake()。 (event_register时c->status=0)
+handshake() 从 HTTP HTTP Upgrade请求中:
+* 提取 Sec-WebSocket-Key
+* 拼接固定 GUID	（"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"）
+* 对拼接结果做 SHA-1 哈希 → Base64 编码，生成 Sec-WebSocket-Accept
+* 返回 HTTP/1.1 101 Switching Protocols 响应
+eg:
+	HTTP/1.1 101 Switching Protocols
+	Upgrade: websocket
+	Connection: Upgrade
+	Sec-WebSocket-Accept: <计算结果>
+客户端的浏览器收到服务端的http响应后，浏览器自动验证：
+浏览器会用自己保存的 Sec-WebSocket-Key 按同样规则计算一次 Base64（SHA1(Sec-WebSocket-Key + GUID)）
+把计算结果与服务端返回的 Sec-WebSocket-Accept 比对
+如果一致 → 握手成功（TCP 连接升级为 WebSocket 协议（不再走普通 HTTP 报文格式））；否则握手失败，连接关闭
 
-4.发送消息
+4.客户端发送数据
 你在浏览器输入消息（Message），点击 Send。
 浏览器会用 WebSocket 协议数据帧（带掩码）发送给服务端。
-服务端在 ws_request() 里，检测到 c->status == 1，调用 decode_packet() 解码数据帧（解掩码）。
-服务端打印 data : ...，然后用 encode_packet() 打包回一个帧，再写回给客户端。
+* 生成一个 4 字节随机掩码
+* 用掩码对 payload 数据进行按位异或加密
+* 组装成 WebSocket 帧发送给服务端
 
-5.接收消息
+5. 服务端接收数据
+服务端在 ws_request() 里，检测到 c->status == 1，调用 decode_packet() 解码数据帧（解掩码）。
+* 读取 FIN、opcode、mask bit、payload length
+* 取出 4 字节 mask key
+* 用 mask key 对 payload 解掩码（再次按位异或），得到真实数据
+
+接下来服务端发送数据
+服务端打印 data : ...
+然后用 encode_packet() 打包回一个帧，再写回给客户端。
+* 不需要加掩码（mask bit = 0）
+	mask bit 这一位表示 payload 数据是否有掩码
+			1 → 有掩码，后面紧跟 4 字节 mask key，payload 需要用这个 key 进行按位异或解码
+			0 → 没有掩码，payload 直接就是明文，不需要异或）
+注意：encode_packet()是服务器->客户端，这里原则上不需要掩码，但是数据帧中还是memecpy了maskkey
+* 直接把 payload 组装进 WebSocket 帧发回
+
+浏览器会自动解析并触发 onmessage 回调。
 浏览器收到服务器的帧 → ws.onmessage 回调触发，显示在日志框里。
 */
 

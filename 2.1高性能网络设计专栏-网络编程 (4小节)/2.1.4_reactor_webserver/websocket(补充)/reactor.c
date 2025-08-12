@@ -60,6 +60,7 @@ int event_register(int fd, int event)
 	conn_list[fd].fd = fd;
 	conn_list[fd].r_action.recv_callback = recv_cb;
 	conn_list[fd].send_callback = send_cb;
+	conn_list[fd].status = 0; // 参考代码和我的代码都没写，这里是补充上去的（虽然不写默认status也是0）
 
 	memset(conn_list[fd].rbuffer, 0, BUFFER_LENGTH);
 	conn_list[fd].rlength = 0;
@@ -220,3 +221,13 @@ int main()
 		}
 	}
 }
+
+/*
+ws_request() 是服务端收到数据时调用的：
+如果 status == 0：先做 WebSocket 握手 (handshake)。
+如果 status == 1：解析客户端数据帧 (decode_packet)，然后重新打包 (encode_packet) 回发。
+
+ws_response() 应该是：
+由服务端主动推送数据给客户端时调用（而不是等待客户端发数据）。
+它可能会构造一个 WebSocket 帧，然后把数据写入 c->wbuffer，并把 c->wlength 设置好，让主循环或 reactor 发送。
+*/
