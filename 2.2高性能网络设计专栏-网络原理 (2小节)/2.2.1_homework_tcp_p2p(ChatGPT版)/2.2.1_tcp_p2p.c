@@ -299,7 +299,20 @@ int main(int argc, char **argv)
         cfd 负责发起：当你主动 connect 对方时，源端口必须等于 lfd 的端口，这样 NAT 设备的映射才一致，对方打过来的数据包也能找到你。
     (3)为什么需要 SO_REUSEADDR / SO_REUSEPORT
         因为 (local_ip, local_port) 已经被 lfd 绑定过了。
-        必须开复用，才能让两个 fd 共享这个端口：
+        必须开复用，才能让两个 fd 共享这个端口
+   
+
+
+   （4）为什么 P2P 连接不仅要本地端口，还要本地 ip；而普通客户端不需要本地端口和ip（仅需服务端ip和服务端端口，比如./tcp_client 192.168.1.100 5000）？
+ A-普通客户端
+            connect(remote_ip, remote_port);时候，操作系统会自动选择一个 本地 IP（通常是默认网卡的 IP）；自动分配一个 本地端口
+            客户端的目标只是成功连接到服务器；服务器也只关心连接能否建立和数据能否传输，不关心客户端的随机端口或自动选择的 IP。
+     关键点：服务器无需关心客户端的具体ip和具体端口号，只要 TCP 四元组唯一即可。
+
+ B-P2P 
+            必须提供local_ip + local_port 以及 remote_ip + remote_port，保证双方都要能主动找到对方。
+            如果A端/B端随便选本地 IP 或端口，另一端可能无法 predict 或 connect。
+            因此在remote_ip和remote_port基础上（即粗浅理解为服务端），还必须显式指定 local IP + local port（粗浅理解为客户端），保证双方可达。
     */
 
     // ---------- 创建 epoll，并注册初始关注项 ----------
