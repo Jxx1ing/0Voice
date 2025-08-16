@@ -1,0 +1,10 @@
+./tcp_p2p <local_ip> <local_port> <remote_ip> <remote_port>
+
+
+//192.168.65.133
+gcc -O2 -Wall -Wextra -o tcp_p2p 2.2.1_tcp_p2p.c
+./tcp_p2p 192.168.65.133 50000 192.168.65.129 50002  
+
+//192.168.65.129
+gcc -O2 -Wall -Wextra -o tcp_p2p 2.2.1_tcp_p2p.c
+./tcp_p2p 192.168.65.129 50002 192.168.65.133 50000
