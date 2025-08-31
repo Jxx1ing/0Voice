@@ -1,0 +1,1 @@
+/usr/bin/c++  -O0 -Wall -g2 -ggdb -std=c++11 -rdynamic CMakeFiles/chat_client.dir/chat_client.cc.o CMakeFiles/chat_client.dir/kcp_client.cc.o CMakeFiles/chat_client.dir/kcp_session.cc.o CMakeFiles/chat_client.dir/udp_socket.cc.o CMakeFiles/chat_client.dir/ikcp.c.o -o chat_client  -lpthread 
