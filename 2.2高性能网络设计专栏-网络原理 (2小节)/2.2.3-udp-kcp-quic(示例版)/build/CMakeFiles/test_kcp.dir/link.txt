@@ -1,1 +1,0 @@
-/usr/bin/c++  -O0 -Wall -g2 -ggdb -std=c++11 -rdynamic CMakeFiles/test_kcp.dir/test.cpp.o CMakeFiles/test_kcp.dir/ikcp.c.o -o test_kcp 
